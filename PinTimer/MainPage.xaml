@@ -1,0 +1,93 @@
+﻿<phone:PhoneApplicationPage
+    x:Class="PinTimer.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:phone="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"
+    xmlns:shell="clr-namespace:Microsoft.Phone.Shell;assembly=Microsoft.Phone"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	xmlns:self="clr-namespace:PinTimer"
+	xmlns:toolkit="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone.Controls.Toolkit"
+	xmlns:fun="clr-namespace:Coding4Fun.Toolkit.Controls;assembly=Coding4Fun.Toolkit.Controls"
+    mc:Ignorable="d"
+    FontFamily="{StaticResource PhoneFontFamilyNormal}"
+    FontSize="{StaticResource PhoneFontSizeNormal}"
+    Foreground="{StaticResource PhoneForegroundBrush}"
+    SupportedOrientations="Portrait" Orientation="Portrait"
+    shell:SystemTray.IsVisible="True">
+	<phone:PhoneApplicationPage.Resources>
+		<self:BoolToColorBrushConverter x:Key="brushConverter"/>
+		<self:BoolToPinActionImageConverter x:Key="titleConverter"/>
+		<self:BoolToPauseResumeImageConverter x:Key="resumeImageConverter"/>
+		<self:BoolToStartStopImageImageConverter x:Key="startImageConverter"/>
+	</phone:PhoneApplicationPage.Resources>
+	<!--LayoutRoot is the root grid where all page content is placed-->
+	<Grid x:Name="LayoutRoot">	
+		<MediaElement AutoPlay="True" Volume="1"  x:Name="media"/>	
+		<ListBox Name="TimersListBox" Loaded="TimersListBox_Loaded">			
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<Grid Background="Transparent" DataContext="{Binding}"  Tag="{Binding}" Name="cellmainGrid"  Tap="Grid_Tap"  toolkit:TiltEffect.IsTiltEnabled="True">
+						<toolkit:ContextMenuService.ContextMenu>
+							<toolkit:ContextMenu>
+								<toolkit:MenuItem Header="delete" Tag="{Binding}"  Click="DeleteMenuItem_Click"/>
+							</toolkit:ContextMenu>
+						</toolkit:ContextMenuService.ContextMenu>
+						<Grid.ColumnDefinitions>
+							<ColumnDefinition Width="150"/>
+							<ColumnDefinition Width="330" />
+						</Grid.ColumnDefinitions>
+						<Grid.RowDefinitions>
+							<RowDefinition/>
+							<RowDefinition/>
+						</Grid.RowDefinitions>
+						<Border Grid.Column="0" Padding="20" Width="130" Height="130"  BorderThickness="4"   Grid.RowSpan="2"  BorderBrush="{StaticResource PhoneAccentBrush}" Tag="{Binding}">
+								<Image Source="{Binding IsActive, Converter={StaticResource startImageConverter}}"/>
+								<!--<Rectangle Fill="Red">
+										<Rectangle.OpacityMask>
+											<ImageBrush ImageSource="Assets/timer.play.png"/>
+										</Rectangle.OpacityMask>
+									</Rectangle>-->
+						</Border>
+						<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center"  FontSize="70" Text="{Binding ElaspedFormatedTime}" TextWrapping="NoWrap" Foreground="{Binding IsActive, Converter={StaticResource brushConverter}}" FontWeight="Bold"/>
+						<StackPanel Margin="0,-10,0,0" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center"   Orientation="Horizontal">
+							<fun:RoundButton Tap="RoundButton_Tap" BorderBrush="{StaticResource PhoneAccentBrush}" Click="OnPinTimerClick" Tag="{Binding}">
+								<fun:RoundButton.Content>
+									<Viewbox Width="50" Height="50">
+										<Image Source="{Binding HasTile, Converter={StaticResource titleConverter}}"/>
+									</Viewbox>
+								</fun:RoundButton.Content>
+							</fun:RoundButton>
+							<fun:RoundButton Tap="RoundButton_Tap" BorderBrush="{StaticResource PhoneAccentBrush}" Click="OnEditTimerClick"  Tag="{Binding}" >
+								<fun:RoundButton.Content>
+									<Viewbox Width="50" Height="50">
+										<Image Source="Assets/edit.png"/>
+									</Viewbox>
+								</fun:RoundButton.Content>
+							</fun:RoundButton>
+							<fun:RoundButton Tap="RoundButton_Tap" BorderBrush="{StaticResource PhoneAccentBrush}" IsEnabled="{Binding IsActive}"  Click="OnPauseTimerClick" Tag="{Binding}" >
+								<fun:RoundButton.Content>
+									<Viewbox Width="50" Height="50">
+										<Image Source="{Binding IsPaused, Converter={StaticResource resumeImageConverter}}"/>
+									</Viewbox>
+								</fun:RoundButton.Content>
+							</fun:RoundButton>
+							<fun:RoundButton Tap="RoundButton_Tap" BorderBrush="{StaticResource PhoneAccentBrush}" IsEnabled="{Binding IsActive}" Click="OnResetTimerClick"  Tag="{Binding}" >
+								<fun:RoundButton.Content>
+									<Viewbox Width="50" Height="50">
+										<Image Source="Assets/timer.rewind.png"/>
+									</Viewbox>
+								</fun:RoundButton.Content>
+							</fun:RoundButton>
+						</StackPanel>
+					</Grid>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+	</Grid>
+	<phone:PhoneApplicationPage.ApplicationBar>
+		<shell:ApplicationBar IsVisible="True" IsMenuEnabled="True">
+			<shell:ApplicationBarIconButton Click="OnAddNewTimerClick"  IconUri="Assets/add.png" Text="add timer"/>						
+		</shell:ApplicationBar>
+	</phone:PhoneApplicationPage.ApplicationBar>
+</phone:PhoneApplicationPage>
