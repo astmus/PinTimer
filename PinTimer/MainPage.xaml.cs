@@ -19,9 +19,9 @@ namespace PinTimer
 {
 	public partial class MainPage : PhoneApplicationPage
 	{
-		PinTimer p;
+		//PinTimer p;
 		TimeSpanPicker _durationPicker;
-		bool _shouldPlayAlarmSound = true;
+		string _exceptionTimerId = null;
 		// Constructor
 		public MainPage()
 		{
@@ -41,7 +41,6 @@ namespace PinTimer
 			PhoneApplicationService.Current.Deactivated += Current_Deactivated;
 			PhoneApplicationService.Current.Closing += Current_Closing;
 			PhoneApplicationService.Current.Activated += Current_Activated;
-			
 			//txtInput is a TextBox defined in XAML.
 			/*var n = ScheduledActionService.GetActions<ScheduledNotification>();
 			if (n.Count<ScheduledNotification>() > 0)
@@ -53,14 +52,14 @@ namespace PinTimer
 			//BuildLocalizedApplicationBar();
 		}
 
-		private void TimersListBox_Loaded(object sender, RoutedEventArgs e)
+		void Current_Activated(object sender, ActivatedEventArgs e)
 		{
-			TimersListBox.Loaded -= TimersListBox_Loaded;
 			ShiftTimeForActiveTimers();
 		}
 
-		void Current_Activated(object sender, ActivatedEventArgs e)
+		private void TimersListBox_Loaded(object sender, RoutedEventArgs e)
 		{
+			this.Loaded -= TimersListBox_Loaded;
 			ShiftTimeForActiveTimers();
 		}
 
@@ -79,11 +78,13 @@ namespace PinTimer
 		private void ShiftTimeForActiveTimers()
 		{
 			if (TimersListBox.Items.Count == 0) return;
-			_shouldPlayAlarmSound = false;
+			var activeTimers = TimersListBox.Items.Cast<PinTimer>().Where(w => w.IsActive && !w.IsPaused && w.Id != _exceptionTimerId).ToList();
+			_exceptionTimerId = null;
+
+			if (activeTimers.Count() == 0) return;			
 			TimeSpan lastTime = GetLastActiveTime();			
 			TimeSpan shiftTime = TimeSpan.FromSeconds(Math.Floor(DateTime.Now.TimeOfDay.TotalSeconds - lastTime.TotalSeconds));			
-			TimersListBox.Items.Cast<PinTimer>().Where(w => w.IsActive && !w.IsPaused).ToList().ForEach(fe => fe.ElapsedTime -= shiftTime);
-			_shouldPlayAlarmSound = true;
+			activeTimers.ForEach(fe => fe.ElapsedTime -= shiftTime);	
 		}
 
 		private TimeSpan GetLastActiveTime()
@@ -141,27 +142,34 @@ namespace PinTimer
 			settings.Save();
 		}
 
-		void OnTimerCompleted(PinTimer obj)
+		void OnTimerCompleted(PinTimer obj, bool inBackground)
 		{
 			if (Dispatcher.CheckAccess())
-				HandleSoundAndAnimation(obj);
+				HandleSoundAndAnimation(obj, inBackground);
 			else
 				Dispatcher.BeginInvoke(() =>
 				{
-					HandleSoundAndAnimation(obj);
+					HandleSoundAndAnimation(obj, inBackground);
 				});
 		}	
 
-		private void HandleSoundAndAnimation(PinTimer obj)
+		private void HandleSoundAndAnimation(PinTimer obj, bool inBackground)
 		{
-			if (_shouldPlayAlarmSound)
+			if (!inBackground)
 			{
 				media.Source = obj.AudioSource;
 				media.Play();
 			}
 
 			ListBoxItem item = TimersListBox.ItemContainerGenerator.ContainerFromItem(obj) as ListBoxItem;
+			StartCompleteAnimation(item);			
+		}
 
+		private void StartCompleteAnimation(ListBoxItem item)
+		{
+#if RELEASE
+			if (item == null) return;
+#endif
 			if (item.Tag == null)
 			{
 				ColorAnimation ca = new ColorAnimation();
@@ -204,7 +212,7 @@ namespace PinTimer
 		{
 			if (_durationPicker.Tag == null) // if we dont have timer for edit
 			{
-				p = new PinTimer(e.NewValue);
+				PinTimer p = new PinTimer(e.NewValue);
 				TimersListBox.Items.Add(p);
 				p.TimerCompleted += OnTimerCompleted;
 			}else // edit timer time
@@ -219,16 +227,22 @@ namespace PinTimer
 		{
 			base.OnNavigatedTo(e);
 			string timerId;
-			this.NavigationContext.QueryString.TryGetValue("id", out timerId);
-			
-			if (timerId != null)
+
+			//if (e.NavigationMode == NavigationMode.New)
+			//	ShiftTimeForActiveTimers();
+
+			if ((e.NavigationMode == NavigationMode.New || e.NavigationMode == NavigationMode.Refresh) && this.NavigationContext.QueryString.TryGetValue("id", out timerId))
 			{
+				//this.NavigationContext.QueryString.Remove("id");
 				PinTimer timer = TimersListBox.Items.First(s => (s as PinTimer).Id == timerId) as PinTimer;
+				if (timer.IsActive == false || timer.IsPaused == true)
+					_exceptionTimerId = timerId;
+			
 				timer.StartTimer();
-			}			
-		}
+			}
+		 }
 		private void OnResetTimerClick(object sender, RoutedEventArgs e)
-		{
+		{ 
 			PinTimer timer = (sender as Button).Tag as PinTimer;
 			timer.ResetTime();
 		}
@@ -274,7 +288,9 @@ namespace PinTimer
 
 		private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
 		{
-			TimersListBox.Items.Remove((sender as MenuItem).DataContext);
+			PinTimer timerForDelete = (sender as MenuItem).DataContext as PinTimer;
+			if (timerForDelete.HasTile) timerForDelete.DeleteTile();
+			TimersListBox.Items.Remove(timerForDelete);
 			SaveTimers();
 		}
 

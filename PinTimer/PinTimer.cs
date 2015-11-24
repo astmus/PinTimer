@@ -23,7 +23,8 @@ namespace PinTimer
 		private Uri _audioSource;
 		private string _id;
 
-		public event Action<PinTimer> TimerCompleted;
+		public event Action<PinTimer, bool> TimerCompleted;
+		
 
 		public static PinTimer CreateFromString(string timerData)
 		{
@@ -82,14 +83,14 @@ namespace PinTimer
 			set
 			{
 				if (value.TotalSeconds > 0)
-					_elapsedTime = value;					
+					_elapsedTime = value;
 				else
 				{
 					StopTimer();
 					_elapsedTime = new TimeSpan();
 					if (TimerCompleted != null)
-						TimerCompleted(this);
-				}
+						TimerCompleted(this, value.TotalSeconds < 0);
+				}				
 				ElaspedFormatedTime = _elapsedTime.ToString();
 			}
 		}
