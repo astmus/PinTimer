@@ -37,7 +37,7 @@ namespace PinTimer
 
 			LoadTimers();
 
-			PhoneApplicationService.Current.UserIdleDetectionMode = IdleDetectionMode.Disabled;
+			ConfigIdleDetectionMode()
 			PhoneApplicationService.Current.Deactivated += Current_Deactivated;
 			PhoneApplicationService.Current.Closing += Current_Closing;
 			PhoneApplicationService.Current.Activated += Current_Activated;
@@ -50,6 +50,11 @@ namespace PinTimer
 			//NotificationListBox.ItemsSource = n;
 			// Sample code to localize the ApplicationBar
 			//BuildLocalizedApplicationBar();
+		}
+
+		void ConfigIdleDetectionMode()
+		{
+			PhoneApplicationService.Current.UserIdleDetectionMode = TimersListBox.Items.Cast<PinTimer>().Any(w => w.IsActive && !w.IsPaused) ? IdleDetectionMode.Disabled : IdleDetectionMode.Enabled;
 		}
 
 		void Current_Activated(object sender, ActivatedEventArgs e)
@@ -149,20 +154,22 @@ namespace PinTimer
 			else
 				Dispatcher.BeginInvoke(() =>
 				{
+					Debug.WriteLine("other thread " + media.CurrentState);
 					HandleSoundAndAnimation(obj, inBackground);
 				});
 		}	
 
 		private void HandleSoundAndAnimation(PinTimer obj, bool inBackground)
 		{
+			ListBoxItem item = TimersListBox.ItemContainerGenerator.ContainerFromItem(obj) as ListBoxItem;
+			ConfigIdleDetectionMode();
+			StartCompleteAnimation(item);
 			if (!inBackground)
 			{
 				media.Source = obj.AudioSource;
-				media.Play();
+				//media.Play();
+				Debug.WriteLine("play started " + media.CurrentState);
 			}
-
-			ListBoxItem item = TimersListBox.ItemContainerGenerator.ContainerFromItem(obj) as ListBoxItem;
-			StartCompleteAnimation(item);			
 		}
 
 		private void StartCompleteAnimation(ListBoxItem item)
@@ -302,11 +309,13 @@ namespace PinTimer
 			if (board != null && board.GetCurrentState() == ClockState.Active)
 			{				
 				board.Stop();
-				media.Stop();
 				innerTimer.ResetTime();
 			}			
 			else
 				HandleTimerTap(innerTimer);
+			
+			media.Stop();
+			Debug.WriteLine("play paused "+media.CurrentState);
 		}
 
 		private void RoundButton_Tap(object sender, System.Windows.Input.GestureEventArgs e)
@@ -314,8 +323,6 @@ namespace PinTimer
 			e.Handled = true;
 		}
 
-
-		
 		// Sample code for building a localized ApplicationBar
 		//private void BuildLocalizedApplicationBar()
 		//{

@@ -52,7 +52,7 @@ namespace PinTimer
 		public PinTimer(TimeSpan countDownTime)
 			: this(countDownTime, Guid.NewGuid().ToString())
 		{
-
+			
 		}
 
 		public PinTimer(TimeSpan countDownTime, string id)
@@ -204,6 +204,7 @@ namespace PinTimer
 				Dispatcher.BeginInvoke(() =>
 				{
 					SetValue(IsPausedProperty, value);
+					
 				});
 			}
 		}
