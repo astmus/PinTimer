@@ -41,15 +41,6 @@ namespace PinTimer
 			ConfigIdleDetectionMode();
 			PhoneApplicationService.Current.Deactivated += Current_Deactivated;
 			PhoneApplicationService.Current.Closing += Current_Closing;
-			//txtInput is a TextBox defined in XAML.
-			/*var n = ScheduledActionService.GetActions<ScheduledNotification>();
-			if (n.Count<ScheduledNotification>() > 0)
-				EmptyTextBlock.Visibility = Visibility.Collapsed;
-			else
-				EmptyTextBlock.Visibility = Visibility.Visible;*/
-			//NotificationListBox.ItemsSource = n;
-			// Sample code to localize the ApplicationBar
-			//BuildLocalizedApplicationBar();
 		}
 
 		void ConfigIdleDetectionMode()
@@ -71,24 +62,33 @@ namespace PinTimer
 		{
 			SaveLastActiveTime();
 			SaveTimers();
+			ScheduleBackgroundTimers();
 		}
 
 		void Current_Deactivated(object sender, DeactivatedEventArgs e)
 		{
 			SaveLastActiveTime();
 			SaveTimers();
+			ScheduleBackgroundTimers();
 		}
 
 		void ScheduleBackgroundTimers()
 		{
-			/*Alarm alarm = new Alarm(name);
-			alarm.Content = contentTextBox.Text;
-			//alarm.Sound = new Uri("/Ringtones/Ring01.wma", UriKind.Relative);
-			alarm.BeginTime = beginTime;
-			alarm.ExpirationTime = expirationTime;
-			alarm.RecurrenceType = recurrence;
+			foreach(PinTimer timer in TimersListBox.Items.Cast<PinTimer>().Where(w => w.IsActive && !w.IsPaused).ToList())
+			{
+				Alarm alarm = new Alarm(timer.ToString());
+				alarm.Content = timer.CountDownTime.ToString() + "is over";
+				alarm.Sound = new Uri("/Audio/2.mp3", UriKind.Relative);
+				alarm.BeginTime = DateTime.Now + timer.ElapsedTime;
+				ScheduledActionService.Add(alarm);
+			}
+		}
 
-			ScheduledActionService.Add(alarm);*/
+		void UnScheduleBackgroundTimers()
+		{
+			var notifications = ScheduledActionService.GetActions<ScheduledNotification>();
+			foreach (ScheduledNotification not in notifications)
+				ScheduledActionService.Remove(not.Name);
 		}
 
 		private void ShiftTimeForActiveTimers(PinTimer excepHandleTimer = null)
@@ -255,7 +255,8 @@ namespace PinTimer
 			PinTimer timer = null;
 			if (this.NavigationContext.QueryString.TryGetValue("id", out timerId))
 				timer = TimersListBox.Items.First(s => (s as PinTimer).Id == timerId) as PinTimer;
-
+			
+			UnScheduleBackgroundTimers();
 			ShiftTimeForActiveTimers(timer);
 
 			// handle tile tap timer
@@ -312,7 +313,7 @@ namespace PinTimer
 
 		private void OnAddNewTimerClick(object sender, EventArgs e)
 		{
-			DisplayTimePicker(new TimeSpan());
+			DisplayTimePicker(TimeSpan.Zero);
 		}
 
 		void DisplayTimePicker(TimeSpan currentTime)
