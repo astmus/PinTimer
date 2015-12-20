@@ -21,7 +21,8 @@ namespace PinTimer
 	{
 		//PinTimer p;
 		TimeSpanPicker _durationPicker;
-		string _exceptionTimerId = null;
+		List<PinTimer> _listNeedAmimationFor = new List<PinTimer>();
+		//PinTimer _tileTapTimer = null;
 		// Constructor
 		public MainPage()
 		{
@@ -37,10 +38,9 @@ namespace PinTimer
 
 			LoadTimers();
 
-			ConfigIdleDetectionMode()
+			ConfigIdleDetectionMode();
 			PhoneApplicationService.Current.Deactivated += Current_Deactivated;
 			PhoneApplicationService.Current.Closing += Current_Closing;
-			PhoneApplicationService.Current.Activated += Current_Activated;
 			//txtInput is a TextBox defined in XAML.
 			/*var n = ScheduledActionService.GetActions<ScheduledNotification>();
 			if (n.Count<ScheduledNotification>() > 0)
@@ -57,15 +57,14 @@ namespace PinTimer
 			PhoneApplicationService.Current.UserIdleDetectionMode = TimersListBox.Items.Cast<PinTimer>().Any(w => w.IsActive && !w.IsPaused) ? IdleDetectionMode.Disabled : IdleDetectionMode.Enabled;
 		}
 
-		void Current_Activated(object sender, ActivatedEventArgs e)
-		{
-			ShiftTimeForActiveTimers();
-		}
-
 		private void TimersListBox_Loaded(object sender, RoutedEventArgs e)
 		{
-			this.Loaded -= TimersListBox_Loaded;
-			ShiftTimeForActiveTimers();
+			foreach (PinTimer timer in _listNeedAmimationFor)
+			{
+				ListBoxItem item = TimersListBox.ItemContainerGenerator.ContainerFromItem(timer) as ListBoxItem;
+				StartCompleteAnimation(item);
+			}
+			_listNeedAmimationFor.Clear();
 		}
 
 		void Current_Closing(object sender, ClosingEventArgs e)
@@ -80,16 +79,26 @@ namespace PinTimer
 			SaveTimers();
 		}
 
-		private void ShiftTimeForActiveTimers()
+		void ScheduleBackgroundTimers()
+		{
+			/*Alarm alarm = new Alarm(name);
+			alarm.Content = contentTextBox.Text;
+			//alarm.Sound = new Uri("/Ringtones/Ring01.wma", UriKind.Relative);
+			alarm.BeginTime = beginTime;
+			alarm.ExpirationTime = expirationTime;
+			alarm.RecurrenceType = recurrence;
+
+			ScheduledActionService.Add(alarm);*/
+		}
+
+		private void ShiftTimeForActiveTimers(PinTimer excepHandleTimer = null)
 		{
 			if (TimersListBox.Items.Count == 0) return;
-			var activeTimers = TimersListBox.Items.Cast<PinTimer>().Where(w => w.IsActive && !w.IsPaused && w.Id != _exceptionTimerId).ToList();
-			_exceptionTimerId = null;
-
+			var activeTimers = TimersListBox.Items.Cast<PinTimer>().Where(w => w.IsActive && !w.IsPaused && w != excepHandleTimer).ToList();
 			if (activeTimers.Count() == 0) return;			
 			TimeSpan lastTime = GetLastActiveTime();			
 			TimeSpan shiftTime = TimeSpan.FromSeconds(Math.Floor(DateTime.Now.TimeOfDay.TotalSeconds - lastTime.TotalSeconds));			
-			activeTimers.ForEach(fe => fe.ElapsedTime -= shiftTime);	
+			activeTimers.ForEach(fe => fe.ElapsedTime -= shiftTime);						
 		}
 
 		private TimeSpan GetLastActiveTime()
@@ -163,7 +172,10 @@ namespace PinTimer
 		{
 			ListBoxItem item = TimersListBox.ItemContainerGenerator.ContainerFromItem(obj) as ListBoxItem;
 			ConfigIdleDetectionMode();
-			StartCompleteAnimation(item);
+			if (item == null)
+				_listNeedAmimationFor.Add(obj);
+			else
+				StartCompleteAnimation(item);
 			if (!inBackground)
 			{
 				media.Source = obj.AudioSource;
@@ -181,8 +193,8 @@ namespace PinTimer
 			{
 				ColorAnimation ca = new ColorAnimation();
 				ca.Duration = TimeSpan.FromSeconds(0.75);
-				ca.From = Colors.Red;
-				ca.To = Colors.Blue;
+				ca.From = Color.FromArgb(255,120,120,120);
+				ca.To = Color.FromArgb(255,80,80,80);
 
 				Storyboard.SetTarget(ca, item);
 				Storyboard.SetTargetProperty(ca, new PropertyPath("(Panel.Background).(SolidColorBrush.Color)"));
@@ -235,18 +247,37 @@ namespace PinTimer
 			base.OnNavigatedTo(e);
 			string timerId;
 
-			//if (e.NavigationMode == NavigationMode.New)
-			//	ShiftTimeForActiveTimers();
+			if (e.NavigationMode == NavigationMode.Reset) return;
+			if (e.IsNavigationInitiator && e.NavigationMode == NavigationMode.Back) return;
+			if (e.NavigationMode == NavigationMode.Back && NavigationContext.QueryString.ContainsKey("id")) return;
 
-			if ((e.NavigationMode == NavigationMode.New || e.NavigationMode == NavigationMode.Refresh) && this.NavigationContext.QueryString.TryGetValue("id", out timerId))
+			//Debug.WriteLine(e.IsNavigationInitiator + " mode = " + e.NavigationMode);
+			PinTimer timer = null;
+			if (this.NavigationContext.QueryString.TryGetValue("id", out timerId))
+				timer = TimersListBox.Items.First(s => (s as PinTimer).Id == timerId) as PinTimer;
+
+			ShiftTimeForActiveTimers(timer);
+
+			// handle tile tap timer
+			if (timer == null) return;
+
+			if (timer.IsActive && !timer.IsPaused)
 			{
-				//this.NavigationContext.QueryString.Remove("id");
-				PinTimer timer = TimersListBox.Items.First(s => (s as PinTimer).Id == timerId) as PinTimer;
-				if (timer.IsActive == false || timer.IsPaused == true)
-					_exceptionTimerId = timerId;
-			
-				timer.StartTimer();
+				TimeSpan lastTime = GetLastActiveTime();
+				TimeSpan shiftTime = TimeSpan.FromSeconds(Math.Floor(DateTime.Now.TimeOfDay.TotalSeconds - lastTime.TotalSeconds));
+				if (shiftTime < timer.ElapsedTime)
+					timer.ElapsedTime -= shiftTime;
+				else
+				{
+					timer.ResetTime();
+					return;
+				}
 			}
+
+			if (timer.IsPaused)
+				timer.ResumeTimer();
+			else
+				timer.StartTimer();
 		 }
 		private void OnResetTimerClick(object sender, RoutedEventArgs e)
 		{ 
@@ -303,9 +334,8 @@ namespace PinTimer
 
 		private void Grid_Tap(object sender, System.Windows.Input.GestureEventArgs e)
 		{
-			var item = TimersListBox.ItemContainerGenerator.ContainerFromItem((sender as Grid).Tag) as ListBoxItem;
 			PinTimer innerTimer = (sender as Grid).Tag as PinTimer;
-			Storyboard board = item.Tag != null ? item.Tag as Storyboard : null;
+			Storyboard board = GetAnimationForTimer(innerTimer);
 			if (board != null && board.GetCurrentState() == ClockState.Active)
 			{				
 				board.Stop();
@@ -316,6 +346,12 @@ namespace PinTimer
 			
 			media.Stop();
 			Debug.WriteLine("play paused "+media.CurrentState);
+		}
+
+		Storyboard GetAnimationForTimer(PinTimer timer)
+		{
+			var item = TimersListBox.ItemContainerGenerator.ContainerFromItem(timer) as ListBoxItem;			
+			return item.Tag != null ? item.Tag as Storyboard : null;
 		}
 
 		private void RoundButton_Tap(object sender, System.Windows.Input.GestureEventArgs e)
