@@ -26,7 +26,7 @@ namespace PinTimer
 		public event Action<PinTimer, bool> TimerCompleted;
 		
 
-		public static PinTimer CreateFromString(string timerData)
+		public static PinTimer ParseFromString(string timerData)
 		{
 			PinTimer result = null;
 			var parts = timerData.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
@@ -102,10 +102,7 @@ namespace PinTimer
 
 		public Uri AudioSource
 		{
-			get
-			{
-				return _audioSource;
-			}
+			get	{ return _audioSource; }
 		}
 		#endregion
 
@@ -127,8 +124,8 @@ namespace PinTimer
 
 		public void DeleteTile()
 		{
+			if (!HasTile) return;
 			ShellTile shellTile = ShellTile.ActiveTiles.FirstOrDefault(tile => tile.NavigationUri.ToString().Contains(_id));
-			if (shellTile == null) return;
 			shellTile.Delete();
 			HasTile = false;
 		}
@@ -204,7 +201,6 @@ namespace PinTimer
 				Dispatcher.BeginInvoke(() =>
 				{
 					SetValue(IsPausedProperty, value);
-					
 				});
 			}
 		}

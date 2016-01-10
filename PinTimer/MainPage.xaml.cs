@@ -14,6 +14,8 @@ using System.Diagnostics;
 using System.IO.IsolatedStorage;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Controls.Primitives;
+using System.Threading.Tasks;
 
 namespace PinTimer
 {
@@ -43,9 +45,55 @@ namespace PinTimer
 			PhoneApplicationService.Current.Closing += Current_Closing;
 		}
 
+		private Popup _popup;
+		private TextBlock _popText;
+		private Popup popup {
+			get
+			{
+				if (_popup == null)
+				{
+					_popText = new TextBlock();
+					_popText.Foreground = (Brush)this.Resources["PhoneForegroundBrush"];
+					_popText.FontSize = (double)this.Resources["PhoneFontSizeMedium"];
+					_popText.Margin = new Thickness(24, 32, 24, 12);
+
+					// grid wrapper
+					Grid grid = new Grid();
+					grid.Background = (Brush)this.Resources["PhoneAccentBrush"];
+					grid.Children.Add(_popText);
+					grid.Width = this.ActualWidth;
+
+					// popup
+					_popup = new Popup();
+					_popup.Child = grid;
+				}
+				
+				return _popup;
+			}
+		}
+
+		// hides popup
+		private void HidePopup()
+		{
+			SystemTray.BackgroundColor = ApplicationBar.BackgroundColor;// (System.Windows.Media.Color)Application.Current.Resources["AppBarBackColor"];//(Color)this.Resources["PhoneBackgroundColor"];
+			popup.IsOpen = false;
+		}
+
+		// shows popup
+		private async void ShowPopup(string message)
+		{
+			await Task.Delay(500);
+			SystemTray.BackgroundColor = (Color)this.Resources["PhoneAccentColor"];
+			popup.IsOpen = true;
+			_popText.Text = message;
+			await Task.Delay(1200);
+			this.HidePopup();
+		}
+
 		void ConfigIdleDetectionMode()
 		{
 			PhoneApplicationService.Current.UserIdleDetectionMode = TimersListBox.Items.Cast<PinTimer>().Any(w => w.IsActive && !w.IsPaused) ? IdleDetectionMode.Disabled : IdleDetectionMode.Enabled;
+			//ShowPopup("Timers active = " + PhoneApplicationService.Current.UserIdleDetectionMode);
 		}
 
 		private void TimersListBox_Loaded(object sender, RoutedEventArgs e)
@@ -77,9 +125,11 @@ namespace PinTimer
 			foreach(PinTimer timer in TimersListBox.Items.Cast<PinTimer>().Where(w => w.IsActive && !w.IsPaused).ToList())
 			{
 				Alarm alarm = new Alarm(timer.ToString());
-				alarm.Content = timer.CountDownTime.ToString() + "is over";
+				alarm.Content = timer.CountDownTime.ToString() + " is over";
 				alarm.Sound = new Uri("/Audio/2.mp3", UriKind.Relative);
 				alarm.BeginTime = DateTime.Now + timer.ElapsedTime;
+				if (alarm.BeginTime.Minute == DateTime.Now.Minute)
+					alarm.BeginTime = alarm.BeginTime.AddSeconds(60 - alarm.BeginTime.Second);
 				ScheduledActionService.Add(alarm);
 			}
 		}
@@ -136,7 +186,7 @@ namespace PinTimer
 
 			foreach (string timer in timersString.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
 			{
-				PinTimer p = PinTimer.CreateFromString(timer);
+				PinTimer p = PinTimer.ParseFromString(timer);
 				p.TimerCompleted += OnTimerCompleted;
 				TimersListBox.Items.Add(p);
 			}
@@ -219,6 +269,7 @@ namespace PinTimer
 				timer.StopTimer();
 				timer.ResetTime();
 			}
+			ConfigIdleDetectionMode();
 		}
 
 		private void OnSrartTimerClick(object sender, RoutedEventArgs e)
@@ -249,19 +300,19 @@ namespace PinTimer
 
 			if (e.NavigationMode == NavigationMode.Reset) return;
 			if (e.IsNavigationInitiator && e.NavigationMode == NavigationMode.Back) return;
-			if (e.NavigationMode == NavigationMode.Back && NavigationContext.QueryString.ContainsKey("id")) return;
+			bool isBackWithTile = (e.NavigationMode == NavigationMode.Back && NavigationContext.QueryString.ContainsKey("id"));
 
 			//Debug.WriteLine(e.IsNavigationInitiator + " mode = " + e.NavigationMode);
 			PinTimer timer = null;
 			if (this.NavigationContext.QueryString.TryGetValue("id", out timerId))
 				timer = TimersListBox.Items.First(s => (s as PinTimer).Id == timerId) as PinTimer;
-			
+
 			UnScheduleBackgroundTimers();
-			ShiftTimeForActiveTimers(timer);
+			ShiftTimeForActiveTimers(isBackWithTile ? null : timer);
 
 			// handle tile tap timer
-			if (timer == null) return;
-
+			if (timer == null || isBackWithTile) return;
+			ShowPopup("tile timer has value");
 			if (timer.IsActive && !timer.IsPaused)
 			{
 				TimeSpan lastTime = GetLastActiveTime();
@@ -279,6 +330,7 @@ namespace PinTimer
 				timer.ResumeTimer();
 			else
 				timer.StartTimer();
+			ConfigIdleDetectionMode();
 		 }
 		private void OnResetTimerClick(object sender, RoutedEventArgs e)
 		{ 
