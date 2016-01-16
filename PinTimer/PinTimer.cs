@@ -62,6 +62,18 @@ namespace PinTimer
 			ElapsedTime = _countDownTime;
 			_audioSource = new System.Uri("/Audio/2.mp3", UriKind.Relative);
 			HasTile = ShellTile.ActiveTiles.FirstOrDefault(tile => tile.NavigationUri.ToString().Contains(_id)) != null;
+			PhoneApplicationService.Current.Deactivated +=Current_Deactivated;
+			PhoneApplicationService.Current.Closing += Current_Closing;
+		}
+
+		void Current_Closing(object sender, ClosingEventArgs e)
+		{
+			UpdateTileAccordinglyToCurrentState();
+		}
+
+		void Current_Deactivated(object sender, DeactivatedEventArgs e)
+		{
+			UpdateTileAccordinglyToCurrentState();
 		}
 
 		#region Properties
@@ -72,8 +84,7 @@ namespace PinTimer
 			{
 				_countDownTime = value;
 				ElapsedTime = _countDownTime;
-				if (HasTile)
-					ShellTile.ActiveTiles.FirstOrDefault(tile => tile.NavigationUri.ToString().Contains(_id)).Update(GetTileDataForThisTimer());
+				UpdateTileAccordinglyToCurrentState();
 			}
 		}
 
@@ -118,7 +129,7 @@ namespace PinTimer
 			if (shellTile != null) return;
 
 			string tileuri = string.Format("/{0}?id={1}", destinationPage, _id);
-			ShellTile.Create(new Uri(tileuri, UriKind.Relative), GetTileDataForThisTimer(), true);
+			ShellTile.Create(new Uri(tileuri, UriKind.Relative), GetTileDataForCurrentState(), true);
 			HasTile = true;
 		}
 
@@ -129,6 +140,29 @@ namespace PinTimer
 			shellTile.Delete();
 			HasTile = false;
 		}
+
+		private void UpdateTileAccordinglyToCurrentState()
+		{
+			if (HasTile) // think about replace this string in to HasTile getter
+				ShellTile.ActiveTiles.FirstOrDefault(tile => tile.NavigationUri.ToString().Contains(_id)).Update(GetTileDataForCurrentState());
+		}
+
+		private IconicTileData GetTileDataForCurrentState()
+		{
+			string uri = "/Assets/timer.png";
+			
+			if (IsActive)
+				uri = IsPaused ? "/Assets/timer.pause.png" : "/Assets/timer.play.png";
+
+			IconicTileData data = new IconicTileData()
+			{
+				Title = ElapsedTime.ToString(),
+				SmallIconImage = new Uri(uri, UriKind.Relative),
+				IconImage = new Uri(uri, UriKind.Relative),
+			};
+
+			return data;
+		}
 		#endregion
 
 		#region Basic actions
@@ -136,6 +170,7 @@ namespace PinTimer
 		public void StartTimer()
 		{
 			StartTimer(_countDownTime);
+			UpdateTileAccordinglyToCurrentState();
 		}
 		public void StartTimer(TimeSpan countDownTime)
 		{
@@ -151,6 +186,7 @@ namespace PinTimer
 			if (_timer == null) return;
 			_timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
 			IsPaused = true;
+			UpdateTileAccordinglyToCurrentState();
 		}
 
 		public void ResumeTimer()
@@ -158,31 +194,22 @@ namespace PinTimer
 			if (_timer == null) return;
 			_timer.Change(1000, 1000);
 			IsPaused = false;
+			UpdateTileAccordinglyToCurrentState();
 		}
 
 		public void StopTimer()
 		{
 			_timer.Dispose();
 			IsPaused = IsActive = false;
+			UpdateTileAccordinglyToCurrentState();
 		}
 
 		public void ResetTime()
 		{
 			ElapsedTime = _countDownTime;
+			UpdateTileAccordinglyToCurrentState();
 		}
-		#endregion
-
-		private IconicTileData GetTileDataForThisTimer()
-		{
-			IconicTileData data = new IconicTileData()
-			{
-				Title = _countDownTime.ToString(),
-				SmallIconImage = new Uri("/Assets/timer.play.png", UriKind.Relative),
-				IconImage = new Uri("/Assets/timer.play.png", UriKind.Relative),
-			};
-
-			return data;
-		}
+		#endregion		
 
 		private void Callback(object state)
 		{
