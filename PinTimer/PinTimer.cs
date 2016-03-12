@@ -13,14 +13,14 @@ using System.Windows.Threading;
 
 namespace PinTimer
 {
-	class PinTimer : DependencyObject
+	public class PinTimer : DependencyObject
 	{
 		private static TimeSpan _negativeSecond = TimeSpan.FromSeconds(-1);
 		private Timer _timer;
 		private TimeSpan _countDownTime;
 
 		private TimeSpan _elapsedTime;
-		private Uri _audioSource;
+		private AudioItemData _audioSource;
 		private string _id;
 
 		public event Action<PinTimer, bool> TimerCompleted;
@@ -42,7 +42,8 @@ namespace PinTimer
 								
 				bool isPaused = bool.Parse(parts[4]);
 				if (isPaused)
-					result.PauseTimer();				
+					result.PauseTimer();
+				result.AudioSource = AudioItemData.ListOfPossible.Where(w => w.Path.OriginalString == parts[5]).First();
 			}
 			catch { }
 
@@ -59,8 +60,9 @@ namespace PinTimer
 		{
 			_id = id;
 			_countDownTime = countDownTime;
-			ElapsedTime = _countDownTime;
-			_audioSource = new System.Uri("/Audio/2.mp3", UriKind.Relative);
+			_elapsedTime = _countDownTime;
+			ElaspedFormatedTime = _elapsedTime.ToString();
+			_audioSource = AudioItemData.ListOfPossible[0];
 			HasTile = ShellTile.ActiveTiles.FirstOrDefault(tile => tile.NavigationUri.ToString().Contains(_id)) != null;
 			PhoneApplicationService.Current.Deactivated +=Current_Deactivated;
 			PhoneApplicationService.Current.Closing += Current_Closing;
@@ -111,15 +113,16 @@ namespace PinTimer
 			get { return _id; }
 		}
 
-		public Uri AudioSource
+		public AudioItemData AudioSource
 		{
 			get	{ return _audioSource; }
+			set { _audioSource = value; }
 		}
 		#endregion
 
 		public override string ToString()
 		{
-			return String.Format("{0}|{1}|{2}|{3}|{4}", (ulong)_countDownTime.TotalSeconds, _id, IsActive, ElapsedTime.TotalMilliseconds, IsPaused);
+			return String.Format("{0}|{1}|{2}|{3}|{4}|{5}", (ulong)_countDownTime.TotalSeconds, _id, IsActive, ElapsedTime.TotalMilliseconds, IsPaused,AudioSource.Path);
 		}
 
 		#region Tile
@@ -143,8 +146,15 @@ namespace PinTimer
 
 		private void UpdateTileAccordinglyToCurrentState()
 		{
-			if (HasTile) // think about replace this string in to HasTile getter
-				ShellTile.ActiveTiles.FirstOrDefault(tile => tile.NavigationUri.ToString().Contains(_id)).Update(GetTileDataForCurrentState());
+			if (this.Dispatcher.CheckAccess())
+				if (HasTile) // think about replace this string in to HasTile getter
+					ShellTile.ActiveTiles.FirstOrDefault(tile => tile.NavigationUri.ToString().Contains(_id)).Update(GetTileDataForCurrentState());
+			else
+				Dispatcher.BeginInvoke(() =>
+				{
+					if (HasTile) // think about replace this string in to HasTile getter
+						ShellTile.ActiveTiles.FirstOrDefault(tile => tile.NavigationUri.ToString().Contains(_id)).Update(GetTileDataForCurrentState());
+				});			
 		}
 
 		private IconicTileData GetTileDataForCurrentState()
@@ -199,7 +209,8 @@ namespace PinTimer
 
 		public void StopTimer()
 		{
-			_timer.Dispose();
+			if (_timer != null)
+				_timer.Dispose();
 			IsPaused = IsActive = false;
 			UpdateTileAccordinglyToCurrentState();
 		}

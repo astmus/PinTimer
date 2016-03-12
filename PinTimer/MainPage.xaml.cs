@@ -16,25 +16,28 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Controls.Primitives;
 using System.Threading.Tasks;
+using Microsoft.Phone;
+using Microsoft.Phone.Reactive;
 
 namespace PinTimer
 {
 	public partial class MainPage : PhoneApplicationPage
 	{
 		//PinTimer p;
-		TimeSpanPicker _durationPicker;
+		//TimeSpanPicker _durationPicker;
 		List<PinTimer> _listNeedAmimationFor = new List<PinTimer>();
+		TimerSettingsSetup _timerSetupControl;
 		//PinTimer _tileTapTimer = null;
 		// Constructor
 		public MainPage()
 		{
 			InitializeComponent();
 			
-			_durationPicker = new TimeSpanPicker();
+			/*_durationPicker = new TimeSpanPicker();
 			_durationPicker.Visibility = Visibility.Collapsed;
 			_durationPicker.DialogTitle = "Select countdown time";
 			_durationPicker.ValueChanged += tp_ValueChanged;
-			LayoutRoot.Children.Add(_durationPicker);
+			LayoutRoot.Children.Add(_durationPicker);*/
 			if (IsLightTheme())
 				LayoutRoot.Background = new SolidColorBrush(Color.FromArgb(255, 120, 120, 120));
 
@@ -126,7 +129,7 @@ namespace PinTimer
 			{
 				Alarm alarm = new Alarm(timer.ToString());
 				alarm.Content = timer.CountDownTime.ToString() + " is over";
-				alarm.Sound = new Uri("/Audio/2.mp3", UriKind.Relative);
+				alarm.Sound = timer.AudioSource.Path;
 				alarm.BeginTime = DateTime.Now + timer.ElapsedTime;
 				if (alarm.BeginTime.Minute == DateTime.Now.Minute)
 					alarm.BeginTime = alarm.BeginTime.AddSeconds(60 - alarm.BeginTime.Second);
@@ -213,7 +216,6 @@ namespace PinTimer
 			else
 				Dispatcher.BeginInvoke(() =>
 				{
-					Debug.WriteLine("other thread " + media.CurrentState);
 					HandleSoundAndAnimation(obj, inBackground);
 				});
 		}	
@@ -228,9 +230,8 @@ namespace PinTimer
 				StartCompleteAnimation(item);
 			if (!inBackground)
 			{
-				media.Source = obj.AudioSource;
-				//media.Play();
-				Debug.WriteLine("play started " + media.CurrentState);
+				media.Source = obj.AudioSource.Path;
+				Scheduler.CurrentThread.Schedule(() => { media.Play(); }, TimeSpan.FromMilliseconds(60));				
 			}
 		}
 
@@ -278,27 +279,13 @@ namespace PinTimer
 			HandleTimerTap(innerTimer);
 		}
 
-		void tp_ValueChanged(object sender, RoutedPropertyChangedEventArgs<TimeSpan> e)
-		{
-			if (_durationPicker.Tag == null) // if we dont have timer for edit
-			{
-				PinTimer p = new PinTimer(e.NewValue);
-				TimersListBox.Items.Add(p);
-				p.TimerCompleted += OnTimerCompleted;
-			}else // edit timer time
-			{
-				PinTimer timer = _durationPicker.Tag as PinTimer;
-				timer.CountDownTime = e.NewValue;
-			}
-			SaveTimers();
-		}
-
 		protected override void OnNavigatedTo(NavigationEventArgs e)
 		{
 			base.OnNavigatedTo(e);
 			string timerId;
 
 			if (e.NavigationMode == NavigationMode.Reset) return;
+			
 			if (e.IsNavigationInitiator && e.NavigationMode == NavigationMode.Back) return;
 			bool isBackWithTile = (e.NavigationMode == NavigationMode.Back && NavigationContext.QueryString.ContainsKey("id"));
 
@@ -332,6 +319,29 @@ namespace PinTimer
 				timer.StartTimer();
 			ConfigIdleDetectionMode();
 		 }
+
+		protected override void OnNavigatedFrom(NavigationEventArgs e)
+		{
+			base.OnNavigatedFrom(e);
+			if (e.Content is CustomDialogPage)
+			{
+				(e.Content as CustomDialogPage).CustomView = _timerSetupControl;
+				(e.Content as CustomDialogPage).dismissedWithOk += OnAddTimerDismissedWithOk;
+			}
+		}
+
+		void OnAddTimerDismissedWithOk(UIElement obj)
+		{
+			if (obj == null) return;
+			if (_timerSetupControl.beginDatePicker.Value == TimeSpan.Zero) return;
+
+			if (TimersListBox.Items.Contains(_timerSetupControl.Timer) == false) // if timer just created
+				TimersListBox.Items.Add(_timerSetupControl.Timer);
+			_timerSetupControl.Timer.TimerCompleted += OnTimerCompleted;
+			SaveTimers();
+			_timerSetupControl = null;
+		}
+
 		private void OnResetTimerClick(object sender, RoutedEventArgs e)
 		{ 
 			PinTimer timer = (sender as Button).Tag as PinTimer;
@@ -350,8 +360,7 @@ namespace PinTimer
 		private void OnEditTimerClick(object sender, RoutedEventArgs e)
 		{
 			PinTimer timer = (sender as Button).Tag as PinTimer;
-			_durationPicker.Tag = timer;
-			DisplayTimePicker(timer.CountDownTime);
+			DisplaySetupTimerDialog(timer);
 		}
 
 		private void OnPauseTimerClick(object sender, RoutedEventArgs e)
@@ -365,17 +374,30 @@ namespace PinTimer
 
 		private void OnAddNewTimerClick(object sender, EventArgs e)
 		{
-			DisplayTimePicker(TimeSpan.Zero);
+			DisplaySetupTimerDialog();
 		}
 
-		void DisplayTimePicker(TimeSpan currentTime)
+		void DisplaySetupTimerDialog(PinTimer timer = null)
 		{
-			_durationPicker.ValueChanged -= tp_ValueChanged;
-			_durationPicker.Value = currentTime;
-			_durationPicker.ValueChanged += tp_ValueChanged;
-
-			_durationPicker.OpenPicker();
+			_timerSetupControl = new TimerSettingsSetup(timer);
+			NavigationService.Navigate(new Uri("/CustomDialogPage.xaml", UriKind.Relative));
+			/*
+			DisplaySetupTimerDialog(_timerSetupControl);
+			_timerSetupControl.beginDatePicker.ValueChanged += beginDatePicker_ValueChanged;
+			_timerSetupControl.soundPicker. += soundPicker_SelectionChanged; // перенести добавление нового таймера на отдельную страницу ибо с messageBox геморой */
 		}
+
+		/*void DisplaySetupTimerDialog(TimerSettingsSetup settings)
+		{
+			CustomMessageBox msb = new CustomMessageBox();			
+			msb.Content = settings;
+			msb.LeftButtonContent = "Ok";
+			msb.RightButtonContent = "Cancel";
+			msb.Show();
+			msb.Dismissed += msb_Dismissed;
+		}*/
+
+		
 
 		private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
 		{

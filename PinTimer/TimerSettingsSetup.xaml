@@ -1,0 +1,143 @@
+﻿<UserControl xmlns:Controls="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone"  x:Class="PinTimer.TimerSettingsSetup"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+   xmlns:toolkit="clr-namespace:Coding4Fun.Toolkit.Controls;assembly=Coding4Fun.Toolkit.Controls"
+    mc:Ignorable="d"
+	xmlns:controls="clr-namespace:Microsoft.Phone.Controls;assembly=Microsoft.Phone.Controls.Toolkit"
+    FontFamily="{StaticResource PhoneFontFamilyNormal}"
+    FontSize="{StaticResource PhoneFontSizeNormal}"
+    Foreground="{StaticResource PhoneForegroundBrush}"
+    d:DesignHeight="580" d:DesignWidth="480">
+
+	<Grid x:Name="LayoutRoot" Background="{StaticResource PhoneChromeBrush}">
+		<StackPanel Orientation="Vertical">
+			<TextBlock Height="30" HorizontalAlignment="Left"  Name="beginTimeLabel" Text="Countdown time" VerticalAlignment="Top" />
+			<toolkit:TimeSpanPicker Value="{Binding CountDownTime, Mode=TwoWay}"  x:Name="beginDatePicker" Width="220" HorizontalAlignment="Left"></toolkit:TimeSpanPicker>
+			<TextBlock Height="30" HorizontalAlignment="Left"  Name="titleLabel" Text="Title" VerticalAlignment="Top" />
+			<TextBox Height="72" HorizontalAlignment="Left"  Name="titleTextBox" Text="" VerticalAlignment="Top" Width="460" MaxLength="63"/>
+			<TextBlock Height="30" HorizontalAlignment="Left"  Name="contentLabel" Text="Content" VerticalAlignment="Top" />
+			<TextBox Height="160" HorizontalAlignment="Left"  Name="contentTextBox" Text="" VerticalAlignment="Top" Width="460" TextWrapping="Wrap" MaxLength="256" AcceptsReturn="True" />
+			<TextBlock Height="30" HorizontalAlignment="Left" Text="Alarm sound" VerticalAlignment="Top" />
+			<controls:ListPicker SelectedItem="{Binding AudioSource, Mode=TwoWay}"  FullModeHeader="Choice sound" DisplayMemberPath="Title"  Name="soundPicker">
+				<controls:ListPicker.FullModeItemTemplate>
+					<DataTemplate>
+						<StackPanel Orientation="Horizontal" >
+							<toolkit:RoundButton Tag="{Binding ElementName=media}"   Tap="RoundButton_Tap"  ImageSource="/Assets/play.png"/>
+							<TextBlock VerticalAlignment="Center" Text="{Binding Title}"  FontSize="22" Padding="15,0,0,10"/>
+							<TextBlock VerticalAlignment="Center" Text="{Binding FormattedLength}" FontSize="22" Padding="10,0,0,10"/>
+						</StackPanel>
+					</DataTemplate>
+				</controls:ListPicker.FullModeItemTemplate>
+				<controls:ListPicker.Resources>
+					<ControlTemplate x:Key="ListPickerControlTemplate1" TargetType="controls:ListPicker">
+						<StackPanel>
+							<VisualStateManager.VisualStateGroups>
+								<VisualStateGroup x:Name="PickerStates">
+									<VisualState x:Name="Normal"/>
+									<VisualState x:Name="Highlighted">
+										<Storyboard>
+											<ObjectAnimationUsingKeyFrames
+												Storyboard.TargetName="UserControl"
+												Storyboard.TargetProperty="Foreground"
+												Duration="0">
+												<DiscreteObjectKeyFrame
+													Value="{StaticResource PhoneTextBoxForegroundBrush}"
+													KeyTime="0"/>
+											</ObjectAnimationUsingKeyFrames>
+											<ObjectAnimationUsingKeyFrames
+												Storyboard.TargetName="Border"
+												Storyboard.TargetProperty="Background"
+												Duration="0">
+												<DiscreteObjectKeyFrame
+													Value="{StaticResource PhoneTextBoxEditBackgroundColor}"
+													KeyTime="0"/>
+											</ObjectAnimationUsingKeyFrames>
+											<ObjectAnimationUsingKeyFrames
+												Storyboard.TargetName="Border"
+												Storyboard.TargetProperty="BorderBrush"
+												Duration="0">
+												<DiscreteObjectKeyFrame
+													Value="{StaticResource PhoneTextBoxEditBorderBrush}"
+													KeyTime="0"/>
+											</ObjectAnimationUsingKeyFrames>
+										</Storyboard>
+									</VisualState>
+									<VisualState x:Name="Disabled">
+										<Storyboard>
+											<ObjectAnimationUsingKeyFrames
+												Storyboard.TargetName="Border"
+												Storyboard.TargetProperty="Background"
+												Duration="0">
+												<DiscreteObjectKeyFrame
+													Value="{StaticResource TransparentBrush}"
+													KeyTime="0"/>
+											</ObjectAnimationUsingKeyFrames>
+											<ObjectAnimationUsingKeyFrames
+												Storyboard.TargetName="Border"
+												Storyboard.TargetProperty="BorderBrush"
+												Duration="0">
+												<DiscreteObjectKeyFrame
+													Value="{StaticResource PhoneDisabledBrush}"
+													KeyTime="0"/>
+											</ObjectAnimationUsingKeyFrames>
+											<ObjectAnimationUsingKeyFrames
+												Storyboard.TargetName="UserControl"
+												Storyboard.TargetProperty="Foreground"
+												Duration="0">
+												<DiscreteObjectKeyFrame
+													Value="{StaticResource PhoneDisabledBrush}"
+													KeyTime="0"/>
+											</ObjectAnimationUsingKeyFrames>
+										</Storyboard>
+									</VisualState>
+								</VisualStateGroup>
+							</VisualStateManager.VisualStateGroups>
+							<ContentControl
+								Content="{TemplateBinding Header}"
+								ContentTemplate="{TemplateBinding HeaderTemplate}"
+								Foreground="{StaticResource PhoneSubtleBrush}"
+								FontSize="{StaticResource PhoneFontSizeNormal}"
+								HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+								Margin="0 0 0 8"/>
+							<Grid>
+
+								<Border x:Name="Border"
+									Background="{TemplateBinding Background}"
+									BorderBrush="{TemplateBinding BorderBrush}"
+									BorderThickness="{TemplateBinding BorderThickness}">
+									<UserControl x:Name="UserControl" Foreground="{TemplateBinding Foreground}">
+										<StackPanel>											
+	
+											<TextBlock x:Name="MultipleSelectionModeSummary" Margin="8 8 0 8" />
+											<Canvas x:Name="ItemsPresenterHost" MinHeight="46">
+												<Grid>
+												<ItemsPresenter x:Name="ItemsPresenter">
+													<ItemsPresenter.RenderTransform>
+														<TranslateTransform x:Name="ItemsPresenterTranslateTransform"/>
+													</ItemsPresenter.RenderTransform>
+												</ItemsPresenter>
+													<toolkit:RoundButton Tap="OnAddSoundTap" Margin="0,3,0,0"  HorizontalAlignment="Right" VerticalAlignment="Top"  ImageSource="Assets/add.png">
+														<toolkit:RoundButton.RenderTransform>
+															<ScaleTransform ScaleX="0.8" CenterX="95"  ScaleY="0.8"/>
+														</toolkit:RoundButton.RenderTransform>
+													</toolkit:RoundButton>
+												</Grid>
+											</Canvas>
+											
+										</StackPanel>
+									</UserControl>
+								</Border>
+							</Grid>
+						</StackPanel>
+					</ControlTemplate>
+				</controls:ListPicker.Resources>
+				<controls:ListPicker.Template>
+					<StaticResource ResourceKey="ListPickerControlTemplate1"/>
+				</controls:ListPicker.Template>
+			</controls:ListPicker>
+		</StackPanel>
+		
+	</Grid>
+</UserControl>

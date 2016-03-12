@@ -97,7 +97,11 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="AudioItemData.cs" />
     <Compile Include="Converters.cs" />
+    <Compile Include="CustomDialogPage.xaml.cs">
+      <DependentUpon>CustomDialogPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="LocalizedStrings.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
@@ -112,6 +116,9 @@
     <Compile Include="SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="TimerSettingsSetup.xaml.cs">
+      <DependentUpon>TimerSettingsSetup.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
@@ -122,11 +129,19 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="CustomDialogPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="MainPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="SettingsPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="TimerSettingsSetup.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -185,8 +200,23 @@
     <Content Include="Assets\Tiles\IconicTileSmall.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Audio\1.mp3" />
-    <Content Include="Audio\2.mp3" />
+    <Content Include="Audio\1112.mp3" />
+    <Content Include="Audio\1614.mp3" />
+    <Content Include="Audio\2300.mp3" />
+    <Content Include="Audio\300.mp3" />
+    <Content Include="Audio\337.mp3" />
+    <Content Include="Audio\408.mp3" />
+    <Content Include="Audio\421.mp3" />
+    <Content Include="Audio\460.mp3" />
+    <Content Include="Audio\522.mp3" />
+    <Content Include="Audio\556.mp3" />
+    <Content Include="Audio\562.mp3" />
+    <Content Include="Audio\596.mp3" />
+    <Content Include="Audio\665.mp3" />
+    <Content Include="Audio\708.mp3" />
+    <Content Include="Audio\807.mp3" />
+    <Content Include="Audio\911.mp3" />
+    <Content Include="Audio\94.mp3" />
     <Content Include="ReadMe.Coding4Fun.Toolkit.txt" />
     <Content Include="README_FIRST.txt" />
     <Content Include="Toolkit.Content\ApplicationBar.Add.png" />
@@ -203,11 +233,11 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Coding4Fun.Toolkit, Version=2.0.8.0, Culture=neutral, PublicKeyToken=c5fd7b72b1a17ce4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Coding4Fun.Toolkit.Controls.2.1.6\lib\windowsphone8\Coding4Fun.Toolkit.dll</HintPath>
+      <HintPath>..\packages\Coding4Fun.Toolkit.Controls.2.1.7\lib\windowsphone8\Coding4Fun.Toolkit.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Coding4Fun.Toolkit.Controls, Version=2.1.6.0, Culture=neutral, PublicKeyToken=c5fd7b72b1a17ce4, processorArchitecture=MSIL">
-      <HintPath>..\packages\Coding4Fun.Toolkit.Controls.2.1.6\lib\windowsphone8\Coding4Fun.Toolkit.Controls.dll</HintPath>
+      <HintPath>..\packages\Coding4Fun.Toolkit.Controls.2.1.7\lib\windowsphone8\Coding4Fun.Toolkit.Controls.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Coding4Fun.Toolkit.Net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=c5fd7b72b1a17ce4, processorArchitecture=MSIL">

@@ -24,7 +24,7 @@
 	</phone:PhoneApplicationPage.Resources>
 	<!--LayoutRoot is the root grid where all page content is placed-->
 	<Grid x:Name="LayoutRoot">	
-		<MediaElement AutoPlay="True" Volume="1"  x:Name="media"/>	
+		<MediaElement AutoPlay="False" Volume="1"  x:Name="media"/>	
 		<ListBox Name="TimersListBox">			
 			<ListBox.ItemTemplate>
 				<DataTemplate>
