@@ -15,10 +15,8 @@
 		<StackPanel Orientation="Vertical">
 			<TextBlock Height="30" HorizontalAlignment="Left"  Name="beginTimeLabel" Text="Countdown time" VerticalAlignment="Top" />
 			<toolkit:TimeSpanPicker Value="{Binding CountDownTime, Mode=TwoWay}"  x:Name="beginDatePicker" Width="220" HorizontalAlignment="Left"></toolkit:TimeSpanPicker>
-			<TextBlock Height="30" HorizontalAlignment="Left"  Name="titleLabel" Text="Title" VerticalAlignment="Top" />
-			<TextBox Height="72" HorizontalAlignment="Left"  Name="titleTextBox" Text="" VerticalAlignment="Top" Width="460" MaxLength="63"/>
-			<TextBlock Height="30" HorizontalAlignment="Left"  Name="contentLabel" Text="Content" VerticalAlignment="Top" />
-			<TextBox Height="160" HorizontalAlignment="Left"  Name="contentTextBox" Text="" VerticalAlignment="Top" Width="460" TextWrapping="Wrap" MaxLength="256" AcceptsReturn="True" />
+			<TextBlock Height="30" HorizontalAlignment="Left"  Name="contentLabel" Text="Content message" VerticalAlignment="Top" />
+			<TextBox Height="160" HorizontalAlignment="Left"  Name="contentTextBox" Text="{Binding ContentMessage,Mode=TwoWay}" VerticalAlignment="Top" Width="460" TextWrapping="Wrap" MaxLength="256" AcceptsReturn="True" />
 			<TextBlock Height="30" HorizontalAlignment="Left" Text="Alarm sound" VerticalAlignment="Top" />
 			<controls:ListPicker SelectedItem="{Binding AudioSource, Mode=TwoWay}"  FullModeHeader="Choice sound" DisplayMemberPath="Title"  Name="soundPicker">
 				<controls:ListPicker.FullModeItemTemplate>

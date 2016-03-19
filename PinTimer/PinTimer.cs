@@ -29,7 +29,7 @@ namespace PinTimer
 		public static PinTimer ParseFromString(string timerData)
 		{
 			PinTimer result = null;
-			var parts = timerData.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+			var parts = timerData.Split(new char[] { '|' });
 			try
 			{
 				TimeSpan time = TimeSpan.FromSeconds(int.Parse(parts[0]));
@@ -43,7 +43,9 @@ namespace PinTimer
 				bool isPaused = bool.Parse(parts[4]);
 				if (isPaused)
 					result.PauseTimer();
-				result.AudioSource = AudioItemData.ListOfPossible.Where(w => w.Path.OriginalString == parts[5]).First();
+				result.AudioSource = AudioItemData.ListOfPossible.Where(w => w.Path.OriginalString == parts[5]).FirstOrDefault() ?? AudioItemData.ListOfPossible[0];
+
+				result.ContentMessage = parts[6];
 			}
 			catch { }
 
@@ -122,7 +124,7 @@ namespace PinTimer
 
 		public override string ToString()
 		{
-			return String.Format("{0}|{1}|{2}|{3}|{4}|{5}", (ulong)_countDownTime.TotalSeconds, _id, IsActive, ElapsedTime.TotalMilliseconds, IsPaused,AudioSource.Path);
+			return String.Format("{0}|{1}|{2}|{3}|{4}|{5}|{6}", (ulong)_countDownTime.TotalSeconds, _id, IsActive, ElapsedTime.TotalMilliseconds, IsPaused,AudioSource.Path,ContentMessage);
 		}
 
 		#region Tile
@@ -226,6 +228,10 @@ namespace PinTimer
 		{
 			ElapsedTime = ElapsedTime.Add(_negativeSecond);			
 		}
+
+#region properties
+		public string ContentMessage { get; set; }
+#endregion
 
 		#region Dp Properties
 		public bool IsPaused

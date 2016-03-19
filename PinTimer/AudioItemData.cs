@@ -54,15 +54,27 @@ namespace PinTimer
 			IsolatedStorageSettings settings = IsolatedStorageSettings.ApplicationSettings;
 			if (settings.Contains("audios"))
 				audioDataString = settings["audios"] as string;
+			else
+				return result;
 
+			bool shouldResaveData = false;
 			foreach (string data in audioDataString.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
 			{
 				var parts = data.Split(new char[] { '|' }, StringSplitOptions.RemoveEmptyEntries);
+				if (System.IO.File.Exists(parts[1]) == false) { shouldResaveData = true; continue; }
 				AudioItemData newItem = new AudioItemData();
 				newItem.Title = parts[0];
-				newItem.Path = new Uri(parts[1], UriKind.RelativeOrAbsolute);
+				newItem.Path = new Uri(parts[1], UriKind.Relative);
+				
 				newItem.Length = TimeSpan.FromMilliseconds(double.Parse(parts[2]));
 				result.Add(newItem);
+			}
+
+			if (shouldResaveData)
+			{
+				string timersString = String.Join(";", result.Select(s => s.ToString()));
+				settings["audios"] = timersString;
+				settings.Save();
 			}
 
 			return result;
@@ -78,6 +90,11 @@ namespace PinTimer
 		{
 			_listOfPossible.Add(data);
 			customItems.Value.Add(data);
+			SaveAudioData();
+		}
+
+		private static void SaveAudioData()
+		{
 			string timersString = String.Join(";", customItems.Value.Select(s => s.ToString()));
 			IsolatedStorageSettings settings = IsolatedStorageSettings.ApplicationSettings;
 

@@ -13,6 +13,7 @@ using Windows.Storage.Pickers;
 using Windows.ApplicationModel.Activation;
 using Microsoft.Phone.Scheduler;
 using System.Windows.Media;
+using Microsoft.Phone.Reactive;
 
 namespace PinTimer
 {
@@ -30,6 +31,7 @@ namespace PinTimer
 		void TimerSettingsSetup_Loaded(object sender, RoutedEventArgs e)
 		{
 			if (beginDatePicker.Value == TimeSpan.Zero)
+				//Scheduler.Dispatcher.Schedule(() => { beginDatePicker.OpenPicker(); }, TimeSpan.FromMilliseconds(200));
 				beginDatePicker.OpenPicker();
 		}
 
@@ -67,11 +69,22 @@ namespace PinTimer
 
 				view.Activated -= viewActivated;
 				var file = args.Files[0];
-				AudioItemData audioData = new AudioItemData();
-				audioData.Path = new Uri(file.Path, UriKind.RelativeOrAbsolute);
-				audioData.Title = file.DisplayName;
-				AudioItemData.AddNewAudio(audioData);
-				soundPicker.SelectedIndex = soundPicker.Items.Count - 1;
+				var audioUri = new Uri(file.Path, UriKind.Relative);
+				try
+				{
+					Alarm al = new Alarm(new Guid().ToString());
+					al.Sound = audioUri;
+
+					AudioItemData audioData = new AudioItemData();
+					audioData.Path = audioUri;
+					audioData.Title = file.DisplayName;
+					AudioItemData.AddNewAudio(audioData);
+					soundPicker.SelectedIndex = soundPicker.Items.Count - 1;
+				}
+				catch (System.Exception ex)
+				{
+					MessageBox.Show("Files name contain unsupported characters. Please select another file.");
+				}				
 			}
 		}
 

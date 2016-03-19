@@ -83,13 +83,13 @@ namespace PinTimer
 		}
 
 		// shows popup
-		private async void ShowPopup(string message)
+		private async void ShowPopup(string message, uint hideAfter = 1200)
 		{
-			await Task.Delay(500);
+			await Task.Delay(50);
 			SystemTray.BackgroundColor = (Color)this.Resources["PhoneAccentColor"];
 			popup.IsOpen = true;
 			_popText.Text = message;
-			await Task.Delay(1200);
+			await Task.Delay((int)hideAfter);
 			this.HidePopup();
 		}
 
@@ -127,12 +127,16 @@ namespace PinTimer
 		{
 			foreach(PinTimer timer in TimersListBox.Items.Cast<PinTimer>().Where(w => w.IsActive && !w.IsPaused).ToList())
 			{
-				Alarm alarm = new Alarm(timer.ToString());
-				alarm.Content = timer.CountDownTime.ToString() + " is over";
+				Alarm alarm = new Alarm(timer.Id);
+				alarm.Content = timer.ContentMessage ?? timer.CountDownTime.ToString() + " is over";
 				alarm.Sound = timer.AudioSource.Path;
 				alarm.BeginTime = DateTime.Now + timer.ElapsedTime;
+				Debug.WriteLine("previous time " + alarm.BeginTime);
 				if (alarm.BeginTime.Minute == DateTime.Now.Minute)
+				{
 					alarm.BeginTime = alarm.BeginTime.AddSeconds(60 - alarm.BeginTime.Second);
+					Debug.WriteLine("changed time " + alarm.BeginTime);
+				}
 				ScheduledActionService.Add(alarm);
 			}
 		}
@@ -227,12 +231,22 @@ namespace PinTimer
 			if (item == null)
 				_listNeedAmimationFor.Add(obj);
 			else
+			{
 				StartCompleteAnimation(item);
+				ShowPopup(obj.ContentMessage, 5000);
+			}
 			if (!inBackground)
 			{
+				media.MediaOpened += media_MediaOpened;
 				media.Source = obj.AudioSource.Path;
-				Scheduler.CurrentThread.Schedule(() => { media.Play(); }, TimeSpan.FromMilliseconds(60));				
+				//Scheduler.Dispatcher.Schedule(() => { media.Play(); }, TimeSpan.FromMilliseconds(3360));				
 			}
+		}
+
+		void media_MediaOpened(object sender, RoutedEventArgs e)
+		{
+			media.Play();
+			media.MediaOpened -= media_MediaOpened;
 		}
 
 		private void StartCompleteAnimation(ListBoxItem item)
@@ -299,7 +313,7 @@ namespace PinTimer
 
 			// handle tile tap timer
 			if (timer == null || isBackWithTile) return;
-			ShowPopup("tile timer has value");
+			//ShowPopup("tile timer has value");
 			if (timer.IsActive && !timer.IsPaused)
 			{
 				TimeSpan lastTime = GetLastActiveTime();
