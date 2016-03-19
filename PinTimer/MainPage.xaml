@@ -23,7 +23,8 @@
 		<self:InverseBoolConverter x:Key="inverseBoolConverter"/>
 	</phone:PhoneApplicationPage.Resources>
 	<!--LayoutRoot is the root grid where all page content is placed-->
-	<Grid x:Name="LayoutRoot">	
+	<Grid x:Name="LayoutRoot">
+		<!--<TextBlock Text="{Binding Path=LocalizedResources.MenuItemDelete, Source={StaticResource LocalizedStrings}}"/>-->
 		<MediaElement AutoPlay="False" Volume="1"  x:Name="media"/>	
 		<ListBox Name="TimersListBox">			
 			<ListBox.ItemTemplate>
@@ -31,7 +32,7 @@
 					<Grid Background="Transparent" DataContext="{Binding}"  Tag="{Binding}" Name="cellmainGrid"  Tap="Grid_Tap"  toolkit:TiltEffect.IsTiltEnabled="True">
 						<toolkit:ContextMenuService.ContextMenu>
 							<toolkit:ContextMenu>
-								<toolkit:MenuItem Header="delete" Tag="{Binding}"  Click="DeleteMenuItem_Click"/>
+								<toolkit:MenuItem Header="{Binding Path=LocalizedResources.MenuItemDelete, Source={StaticResource LocalizedStrings}}" Tag="{Binding}"  Click="DeleteMenuItem_Click"/>
 							</toolkit:ContextMenu>
 						</toolkit:ContextMenuService.ContextMenu>
 						<Grid.ColumnDefinitions>

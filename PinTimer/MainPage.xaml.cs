@@ -42,7 +42,7 @@ namespace PinTimer
 				LayoutRoot.Background = new SolidColorBrush(Color.FromArgb(255, 120, 120, 120));
 
 			LoadTimers();
-
+			BuildLocalizedApplicationBar();
 			ConfigIdleDetectionMode();
 			PhoneApplicationService.Current.Deactivated += Current_Deactivated;
 			PhoneApplicationService.Current.Closing += Current_Closing;
@@ -449,19 +449,27 @@ namespace PinTimer
 		}
 
 		// Sample code for building a localized ApplicationBar
-		//private void BuildLocalizedApplicationBar()
-		//{
-		//    // Set the page's ApplicationBar to a new instance of ApplicationBar.
-		//    ApplicationBar = new ApplicationBar();
+		private void BuildLocalizedApplicationBar()
+		{
+		    // Set the page's ApplicationBar to a new instance of ApplicationBar.
+		    ApplicationBar = new ApplicationBar();
+				//    // Create a new button and set the text value to the localized string from AppResources.
+			ApplicationBarIconButton appBarButton = new ApplicationBarIconButton(new Uri("Assets/add.png", UriKind.Relative));
+		    appBarButton.Text = AppResources.AppBarAddTimer;
+			appBarButton.Click += OnAddNewTimerClick;
+		    ApplicationBar.Buttons.Add(appBarButton);
 
-		//    // Create a new button and set the text value to the localized string from AppResources.
-		//    ApplicationBarIconButton appBarButton = new ApplicationBarIconButton(new Uri("/Assets/AppBar/appbar.add.rest.png", UriKind.Relative));
-		//    appBarButton.Text = AppResources.AppBarButtonText;
-		//    ApplicationBar.Buttons.Add(appBarButton);
+			appBarButton = new ApplicationBarIconButton(new Uri("Assets/feature.settings.png", UriKind.Relative));
+			appBarButton.Text = AppResources.AppBarSettings;
+			appBarButton.Click += (sender, e) => { NavigationService.Navigate(new Uri("/SettingsPage.xaml", UriKind.Relative)); };
+			ApplicationBar.Buttons.Add(appBarButton);
 
-		//    // Create a new menu item with the localized string from AppResources.
-		//    ApplicationBarMenuItem appBarMenuItem = new ApplicationBarMenuItem(AppResources.AppBarMenuItemText);
-		//    ApplicationBar.MenuItems.Add(appBarMenuItem);
-		//}
+			//feature.settings.png
+		    // Create a new menu item with the localized string from AppResources.
+		    //ApplicationBarMenuItem appBarMenuItem = new ApplicationBarMenuItem(AppResources.AppBarMenuItemText);
+		    //ApplicationBar.MenuItems.Add(appBarMenuItem);
+		}
+
+		
 	}
 }
