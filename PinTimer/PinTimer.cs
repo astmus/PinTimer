@@ -13,7 +13,7 @@ using System.Windows.Threading;
 
 namespace PinTimer
 {
-	public class PinTimer : DependencyObject
+	public class PinTimer : DependencyObject, IComparable<PinTimer>
 	{
 		private static TimeSpan _negativeSecond = TimeSpan.FromSeconds(-1);
 		private Timer _timer;
@@ -302,5 +302,15 @@ namespace PinTimer
 			DependencyProperty.Register("ElaspedFormatedTime", typeof(string), typeof(PinTimer), new PropertyMetadata(null));
 
 		#endregion
+
+		public int CompareTo(PinTimer other)
+		{
+			if (this.ElapsedTime < other.ElapsedTime)
+				return -1;
+			else if (this.ElapsedTime > other.ElapsedTime)
+				return 1;
+			else
+				return 0;
+		}
 	}
 }

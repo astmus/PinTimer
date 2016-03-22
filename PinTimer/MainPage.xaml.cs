@@ -233,13 +233,20 @@ namespace PinTimer
 			else
 			{
 				StartCompleteAnimation(item);
-				ShowPopup(obj.ContentMessage, 5000);
+				if (!String.IsNullOrEmpty(obj.ContentMessage))
+					ShowPopup(obj.ContentMessage, 5000);
 			}
 			if (!inBackground)
 			{
-				media.MediaOpened += media_MediaOpened;
-				media.Source = obj.AudioSource.Path;
-				//Scheduler.Dispatcher.Schedule(() => { media.Play(); }, TimeSpan.FromMilliseconds(3360));				
+				if (media.Source == null || System.IO.Path.GetFullPath(media.Source.OriginalString) != System.IO.Path.GetFullPath(obj.AudioSource.Path.OriginalString) ||
+					media.CurrentState == MediaElementState.AcquiringLicense || media.CurrentState == MediaElementState.Opening || media.CurrentState == MediaElementState.Individualizing)
+				{
+					// if sound goes through one of opening state subscribe for play it later
+					media.MediaOpened += media_MediaOpened;
+					media.Source = obj.AudioSource.Path;
+				}
+				else
+					media.Play(); // if sound loaded and opened successful then play
 			}
 		}
 
@@ -278,7 +285,10 @@ namespace PinTimer
 		private void HandleTimerTap(PinTimer timer)
 		{
 			if (!timer.IsActive)
+			{
 				timer.StartTimer();
+				PreloadSoundForNextExpireTimer();
+			}
 			else
 			{
 				timer.StopTimer();
@@ -287,10 +297,13 @@ namespace PinTimer
 			ConfigIdleDetectionMode();
 		}
 
-		private void OnSrartTimerClick(object sender, RoutedEventArgs e)
+		private void PreloadSoundForNextExpireTimer()
 		{
-			PinTimer innerTimer = (sender as Button).Tag as PinTimer;
-			HandleTimerTap(innerTimer);
+			var activeTimers = TimersListBox.Items.Cast<PinTimer>().Where(w => w.IsActive && !w.IsPaused);
+			if (activeTimers.Count() == 0) return;
+			PinTimer timer = activeTimers.Min();
+			if (media.Source == null || System.IO.Path.GetFullPath(media.Source.OriginalString) != System.IO.Path.GetFullPath(timer.AudioSource.Path.OriginalString))
+				media.Source = new Uri(timer.AudioSource.Path.OriginalString,UriKind.Relative);
 		}
 
 		protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -395,22 +408,7 @@ namespace PinTimer
 		{
 			_timerSetupControl = new TimerSettingsSetup(timer);
 			NavigationService.Navigate(new Uri("/CustomDialogPage.xaml", UriKind.Relative));
-			/*
-			DisplaySetupTimerDialog(_timerSetupControl);
-			_timerSetupControl.beginDatePicker.ValueChanged += beginDatePicker_ValueChanged;
-			_timerSetupControl.soundPicker. += soundPicker_SelectionChanged; // перенести добавление нового таймера на отдельную страницу ибо с messageBox геморой */
 		}
-
-		/*void DisplaySetupTimerDialog(TimerSettingsSetup settings)
-		{
-			CustomMessageBox msb = new CustomMessageBox();			
-			msb.Content = settings;
-			msb.LeftButtonContent = "Ok";
-			msb.RightButtonContent = "Cancel";
-			msb.Show();
-			msb.Dismissed += msb_Dismissed;
-		}*/
-
 		
 
 		private void DeleteMenuItem_Click(object sender, RoutedEventArgs e)
@@ -468,6 +466,11 @@ namespace PinTimer
 		    // Create a new menu item with the localized string from AppResources.
 		    //ApplicationBarMenuItem appBarMenuItem = new ApplicationBarMenuItem(AppResources.AppBarMenuItemText);
 		    //ApplicationBar.MenuItems.Add(appBarMenuItem);
+		}
+
+		private void media_MediaEnded(object sender, RoutedEventArgs e)
+		{
+			PreloadSoundForNextExpireTimer();
 		}
 
 		

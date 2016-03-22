@@ -25,7 +25,7 @@
 	<!--LayoutRoot is the root grid where all page content is placed-->
 	<Grid x:Name="LayoutRoot">
 		<!--<TextBlock Text="{Binding Path=LocalizedResources.MenuItemDelete, Source={StaticResource LocalizedStrings}}"/>-->
-		<MediaElement AutoPlay="False" Volume="1"  x:Name="media"/>	
+		<MediaElement AutoPlay="False" Volume="1"  MediaEnded="media_MediaEnded"  x:Name="media"/>	
 		<ListBox Name="TimersListBox">			
 			<ListBox.ItemTemplate>
 				<DataTemplate>

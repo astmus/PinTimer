@@ -5,6 +5,8 @@ VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PinTimer", "PinTimer\PinTimer.csproj", "{24597C99-710A-4274-862E-C2C6E4C90610}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground", "Playground\Playground.csproj", "{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,14 @@ Global
 		{24597C99-710A-4274-862E-C2C6E4C90610}.Release|x86.ActiveCfg = Release|x86
 		{24597C99-710A-4274-862E-C2C6E4C90610}.Release|x86.Build.0 = Release|x86
 		{24597C99-710A-4274-862E-C2C6E4C90610}.Release|x86.Deploy.0 = Release|x86
+		{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}.Release|ARM.ActiveCfg = Release|Any CPU
+		{CD2FD1AE-9A83-473F-9489-BFB4FF96E644}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
